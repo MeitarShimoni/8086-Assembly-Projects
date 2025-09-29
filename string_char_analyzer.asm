@@ -1,5 +1,3 @@
-; Question 2
-; Meitar Shimoni, ID: 318519212
 
 .MODEL small
 .STACK 100h
@@ -154,3 +152,4 @@ print_loop:
 print_dec_nums ENDP
 
 END main
+
