@@ -1,5 +1,3 @@
-; Question 3
-; Name: Meitar Shimoni, ID: 318519212
 
 .MODEL SMALL
 .STACK 100h
@@ -92,3 +90,4 @@ myDivideByZeroHandler PROC
 myDivideByZeroHandler ENDP
 
 END main
+
