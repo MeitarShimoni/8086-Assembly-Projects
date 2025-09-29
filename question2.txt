@@ -1,0 +1,156 @@
+; Question 2
+; Meitar Shimoni, ID: 318519212
+
+.MODEL small
+.STACK 100h
+
+array_size EQU 20
+
+.DATA
+msg1 DB 'Enter up to 20 characters and press Enter: $'
+msg2 DB 10, 13, 'Numbers sum: $'
+msg3 DB 10, 13, 'Other chars amount: $'
+newline DB 10, 13, '$'
+
+sum DW 0
+count_others DW 0
+
+; input buffer: [0] max len, [1] actual len, [2..] data
+input_buf DB (array_size + 1)
+          DB ?
+          DB (array_size + 1) DUP(?)
+
+.CODE
+
+main PROC
+    ; init DS
+    MOV AX, @DATA
+    MOV DS, AX
+
+    ; prompt user
+    MOV DX, OFFSET msg1
+    MOV AH, 09h
+    INT 21h
+
+    ; read a line (buffered)
+    LEA DX, input_buf
+    MOV AH, 0Ah
+    INT 21h
+
+    ; newline for spacing
+    LEA DX, newline
+    MOV AH, 09h
+    INT 21h
+
+    ; CX = length of input, SI = start of input
+    MOV CL, [input_buf + 1]
+    XOR CH, CH
+    LEA SI, input_buf + 2
+
+AGAIN:
+    CMP CX, 0
+    JE END_LOOP
+
+    LODSB              ; get next char in AL
+
+    ; check if 0-9
+    CMP AL, '0'
+    JB CHECK_UPPERCASE
+    CMP AL, '9'
+    JA CHECK_UPPERCASE
+    SUB AL, '0'        ; convert to number
+    XOR AH, AH
+    ADD sum, AX        ; add to sum of digits
+    JMP SKIP_PRINT
+
+CHECK_UPPERCASE:
+    ; check if A-Z ? convert to lowercase
+    CMP AL, 'A'
+    JB CHECK_LOWERCASE
+    CMP AL, 'Z'
+    JA CHECK_LOWERCASE
+    ADD AL, 32
+    JMP PRINT_CHAR
+
+CHECK_LOWERCASE:
+    ; check if a-z ? convert to uppercase
+    CMP AL, 'a'
+    JB CHECK_SPACE
+    CMP AL, 'z'
+    JA CHECK_SPACE
+    SUB AL, 32
+    JMP PRINT_CHAR
+
+CHECK_SPACE:
+    ; if space, just print it
+    CMP AL, ' '
+    JNE OTHERS
+    JMP PRINT_CHAR
+
+OTHERS:
+    ; anything else is "other"
+    INC count_others
+    JMP SKIP_PRINT
+
+PRINT_CHAR:
+    ; print the char in DL
+    MOV DL, AL
+    MOV AH, 02h
+    INT 21h
+
+SKIP_PRINT:
+    LOOP AGAIN
+
+END_LOOP:
+    ; print numbers sum
+    LEA DX, msg2
+    MOV AH, 09h
+    INT 21h
+    MOV AX, sum
+    CALL print_dec_nums
+
+    ; print other chars count
+    LEA DX, msg3
+    MOV AH, 09h
+    INT 21h
+    MOV AX, count_others
+    CALL print_dec_nums
+
+FINISH:
+    MOV AH, 4Ch
+    INT 21h
+main ENDP
+
+;---------------------------------------
+; print_dec_nums: prints AX as decimal
+;---------------------------------------
+print_dec_nums PROC
+    CMP AX, 0
+    JNE start_conversion
+    MOV DL, '0'
+    MOV AH, 02h
+    INT 21h
+    RET
+
+start_conversion:
+    XOR CX, CX
+    MOV BX, 10
+
+divide_loop:
+    XOR DX, DX
+    DIV BX
+    PUSH DX
+    INC CX
+    CMP AX, 0
+    JNE divide_loop
+
+print_loop:
+    POP DX
+    ADD DL, '0'
+    MOV AH, 02h
+    INT 21h
+    LOOP print_loop
+    RET
+print_dec_nums ENDP
+
+END main

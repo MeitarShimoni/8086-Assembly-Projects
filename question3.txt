@@ -1,0 +1,94 @@
+; Question 3
+; Name: Meitar Shimoni, ID: 318519212
+
+.MODEL SMALL
+.STACK 100h
+
+.DATA
+promptMessage   DB 'Enter a number to divide by (0-9): $'
+errorMessage    DB 13,10,'You cant divide by zero !!!',13,10,'$'
+successMessage  DB 13,10,'Division successful.$'
+
+original_IP     DW ?
+original_CS     DW ?
+
+.CODE
+
+main PROC
+    ; init data segment
+    MOV AX, @DATA
+    MOV DS, AX
+
+    ; save old INT 0 vector
+    MOV AH, 35h
+    MOV AL, 0
+    INT 21h
+    MOV original_IP, BX
+    MOV original_CS, ES
+
+    ; install custom INT 0 handler
+    MOV AH, 25h
+    MOV AL, 0
+    MOV DX, OFFSET myDivideByZeroHandler
+    PUSH CS
+    POP DS
+    INT 21h
+    MOV AX, @DATA
+    MOV DS, AX   ; restore DS
+
+    ; prompt user
+    MOV DX, OFFSET promptMessage
+    MOV AH, 09h
+    INT 21h
+
+    ; read char
+    MOV AH, 01h
+    INT 21h
+    SUB AL, '0'
+    XOR AH, AH
+
+    ; divide 100 by input
+    MOV BX, AX
+    MOV AX, 100
+    DIV BL       ; will trigger INT 0 if BL=0
+
+    ; if OK
+    MOV DX, OFFSET successMessage
+    MOV AH, 09h
+    INT 21h
+
+    ; restore old INT 0
+    MOV AH, 25h
+    MOV AL, 0
+    MOV DX, original_IP
+    PUSH original_CS
+    POP DS
+    INT 21h
+
+    ; exit
+    MOV AH, 4Ch
+    INT 21h
+main ENDP
+
+; custom INT 0 handler
+myDivideByZeroHandler PROC
+    PUSH AX
+    PUSH DX
+
+    MOV AX, @DATA
+    MOV DS, AX
+    MOV DX, OFFSET errorMessage
+    MOV AH, 09h
+    INT 21h
+
+    ; skip DIV instruction (2 bytes)
+    PUSHF
+    POP AX
+    ADD [BP+0], 2
+
+    POP DX
+    POP AX
+    IRET
+myDivideByZeroHandler ENDP
+
+END main

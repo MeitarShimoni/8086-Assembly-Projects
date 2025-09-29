@@ -1,0 +1,84 @@
+; Question 4: Reverse a string using two pointers.
+; Meitar Shimoni, ID: 318519212
+
+.MODEL SMALL
+.STACK 100h
+
+.DATA
+promptMessage   DB 'Enter a string to reverse and press Enter: $'
+reversedMessage DB 13, 10, 'Reversed string: $'
+
+; buffered input: [0] max len, [1] actual len, [2..] chars
+input_buffer    DB 81, ?, 81 DUP('$')
+
+.CODE
+
+main PROC
+    ; init DS
+    MOV AX, @DATA
+    MOV DS, AX
+
+    ; ask user for input
+    MOV DX, OFFSET promptMessage
+    MOV AH, 09h
+    INT 21h
+
+    ; read a line into buffer
+    LEA DX, input_buffer
+    MOV AH, 0Ah
+    INT 21h
+
+    ; get length of input in CX
+    LEA BX, input_buffer
+    MOV CL, [BX + 1]
+    XOR CH, CH
+
+    ; if empty or 1 char, nothing to reverse
+    CMP CX, 1
+    JBE END_REVERSE
+
+    ; set SI at start, DI at end
+    LEA SI, [BX + 2]
+    MOV DI, SI
+    ADD DI, CX
+    DEC DI
+
+    ; only need to swap half the chars
+    SHR CX, 1
+
+REVERSE_LOOP:
+    MOV AL, [SI]
+    MOV AH, [DI]
+    MOV [SI], AH
+    MOV [DI], AL
+    INC SI
+    DEC DI
+    LOOP REVERSE_LOOP
+
+END_REVERSE:
+    ; show message before reversed string
+    MOV DX, OFFSET reversedMessage
+    MOV AH, 09h
+    INT 21h
+
+    ; print reversed string char by char
+    LEA SI, input_buffer + 2
+    MOV CL, [input_buffer + 1]
+    XOR CH, CH
+
+    CMP CX, 0
+    JE EXIT_PROGRAM
+
+PRINT_LOOP:
+    MOV DL, [SI]
+    MOV AH, 02h
+    INT 21h
+    INC SI
+    LOOP PRINT_LOOP
+
+EXIT_PROGRAM:
+    MOV AH, 4Ch
+    INT 21h
+main ENDP
+
+END main
