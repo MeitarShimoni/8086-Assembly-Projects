@@ -1,5 +1,3 @@
-; Question 1
-; Name: Meitar Shimoni, ID: 318519212
 
 .MODEL small
 .STACK 100h
@@ -155,3 +153,4 @@ PRINT_LOOP:
 PRINT_NUMBER ENDP
 
 END main
+
