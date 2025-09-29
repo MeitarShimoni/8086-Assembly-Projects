@@ -1,5 +1,3 @@
-; Question 4: Reverse a string using two pointers.
-; Meitar Shimoni, ID: 318519212
 
 .MODEL SMALL
 .STACK 100h
@@ -82,3 +80,4 @@ EXIT_PROGRAM:
 main ENDP
 
 END main
+
